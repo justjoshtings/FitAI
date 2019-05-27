@@ -1,5 +1,6 @@
 '''
-Establish initial connection to gain access and refresh token from Fitbit API
+I. Establish initial connection to gain access and refresh token from Fitbit API.
+II. Various methods to interact with Fitbit's REST API.
 '''
 
 '''
@@ -12,6 +13,28 @@ import credentials as cred
 import base64
 
 class FitbitAuthorization:
+	'''
+	Object for initiating Fitbit OAuth 2.0, getting access tokens, saving, and refreshing tokens.
+
+	Have methods:
+		establishConnection(self) 
+			- Establish OAuth 2.0 connection with Fitbit's API and get authorization code.
+
+		getTokens(self) 
+			- Exchange authorization code with Fitbit to get access and refresh tokens.
+
+		saveTokens(self, filename="fitbit_access_tokens.json") 
+			- Saves tokens to JSON file. Default filename specified.
+
+		refreshTokens(self, filename="fitbit_access_tokens.json")
+			- Refreshes the access token using the refresh token and saves back to JSON file.
+
+		seeTokens(self, filename="fitbit_access_tokens.json")
+			- Prints tokens information for display.
+
+		retrieveAccessToken(self, filename="fitbit_access_tokens.json")
+			- Returns the current access token.
+	'''
 	def __init__(self, clientID, clientSecret, callback_URL):
 		self.clientID = clientID 
 		self.clientSecret = clientSecret
@@ -31,10 +54,9 @@ class FitbitAuthorization:
 	            "social",
 	            "weight",]
 
-
 	def establishConnection(self):
 		'''
-		Establish OAuthorization connection with Fitbit's API
+		Establish OAuth 2.0 connection with Fitbit's API
 		'''
 		oauth = OAuth2Session(self.clientID, redirect_uri=self.callback_URL, scope=self.scope)
 		
@@ -62,7 +84,17 @@ class FitbitAuthorization:
 		  "code": self.authorization_code,
 		}
 
-		self.response = requests.post(self.token_request_URI , headers=self.headers, data=self.data)
+		try:
+			self.response = requests.post(self.token_request_URI , headers=self.headers, data=self.data)
+			self.response.raise_for_status()
+		except requests.exceptions.HTTPError as errh:
+			print ("Http Error:",errh)
+		except requests.exceptions.ConnectionError as errc:
+			print ("Error Connecting:",errc)
+		except requests.exceptions.Timeout as errt:
+			print ("Timeout Error:",errt)
+		except requests.exceptions.RequestException as err:
+			print ("OOps: Something Else",err)
 
 	def saveTokens(self, filename="fitbit_access_tokens.json"):
 		#Save tokens to JSON file
@@ -91,8 +123,17 @@ class FitbitAuthorization:
 		  "expires_in": 28800, #default = 28800s = 8hrs
 		}
 
-		self.response_refresh = requests.post(self.token_request_URI , headers=self.headers_refresh, data=self.data_refresh)
-		# print(self.response_refresh.text)
+		try:
+			self.response_refresh = requests.post(self.token_request_URI , headers=self.headers_refresh, data=self.data_refresh)
+			self.response_refresh.raise_for_status()
+		except requests.exceptions.HTTPError as errh:
+			print ("Http Error:",errh)
+		except requests.exceptions.ConnectionError as errc:
+			print ("Error Connecting:",errc)
+		except requests.exceptions.Timeout as errt:
+			print ("Timeout Error:",errt)
+		except requests.exceptions.RequestException as err:
+			print ("OOps: Something Else",err)
 
 		self.access_token_new = json.loads(self.response_refresh.text)['access_token']
 		self.refresh_token_new = json.loads(self.response_refresh.text)['refresh_token']
@@ -115,10 +156,66 @@ class FitbitAuthorization:
 		print('Token Type: {}'.format(self.token_dict['token_type']))
 		print('Scope: {}'.format(self.token_dict['scope']))
 
+	def retrieveAccessToken(self, filename="fitbit_access_tokens.json"):
+		'''
+		Returns current access token
+		'''
+		with open(filename) as json_file:
+			self.token_dict = json.loads(json.load(json_file))
 
-My_App_Credentials = FitbitAuthorization(cred.clientID, cred.clientSecret, cred.callback_URL)
-# My_App_Credentials.establishConnection()
-# My_App_Credentials.getTokens()
-# My_App_Credentials.saveTokens()
-My_App_Credentials.refreshTokens()
-My_App_Credentials.seeTokens()
+		return self.token_dict['access_token']
+
+
+class FitbitAPI:
+	def __init__(self, access_token):
+		self.baseAPI = 'https://api.fitbit.com'
+		self.access_token = access_token
+		self.secret_header = {'Authorization': 'Bearer {}'.format(self.access_token)}
+
+		self.API_endpoints_dict = {
+				'User': {
+						'Badges': '/1/user/-/badges.json',
+						'Profile': '/1/user/-/profile.json',
+						},
+		}
+
+	def makeAPICall(self, endpoint):
+		'''
+		Make API call
+		'''
+		self.endpoint
+		self.API_endpoint = self.baseAPI+self.endpoint
+
+		try:
+			self.r = requests.get(self.API_endpoint, headers=self.secret_header, timeout=10)
+			self.r.raise_for_status()
+		except requests.exceptions.HTTPError as errh:
+			print ("Http Error:",errh)
+		except requests.exceptions.ConnectionError as errc:
+			print ("Error Connecting:",errc)
+		except requests.exceptions.Timeout as errt:
+			print ("Timeout Error:",errt)
+		except requests.exceptions.RequestException as err:
+			print ("OOps: Something Else",err)
+
+		print(self.r.status_code)
+		print(self.r.text)
+
+		return self.r.text
+
+class UserData(FitbitAPI):
+	def __init__(self, access_token):
+		super().__init__(access_token)
+
+	def getBadges(self):
+		self.endpoint = self.API_endpoints_dict['User']['Badges']
+		super().makeAPICall(self.endpoint)
+
+
+# api_endpoints = {'Daily_Activity': '/1/user/-/activities/heart/date/{}/1d/1min.json', }
+
+# secret_header = {'Authorization': 'Bearer {}'.format(secret_token)}
+
+# today_date = dt.today().strftime('%Y-%m-%d')
+
+# query_str = API_base + api_endpoints['Daily_Activity'].format(today_date)

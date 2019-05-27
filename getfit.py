@@ -7,25 +7,24 @@ import numpy as np
 import pandas as pd
 from datetime import datetime as  dt
 import json
+from GetFitbitAPI import *
+import credentials as cred
 
-'''
-Build API Endpoints
-'''
+#Instantiate my user authorization to get access and refresh tokens
+My_App = FitbitAuthorization(cred.clientID, cred.clientSecret, cred.callback_URL)
 
-API_base = 'https://api.fitbit.com'
+# My_App.establishConnection()
+# My_App.getTokens()
+# My_App.saveTokens()
+# My_App.seeTokens()
 
-api_endpoints = {'Daily_Activity': '/1/user/-/activities/heart/date/{}/1d/1min.json', }
 
-secret_header = {'Authorization': 'Bearer {}'.format(secret_token)}
+# My_App.refreshTokens()
 
-today_date = dt.today().strftime('%Y-%m-%d')
+access_token = My_App.retrieveAccessToken()
 
-query_str = API_base + api_endpoints['Daily_Activity'].format(today_date)
+My_User = UserData(access_token)
+print(My_User.getBadges())
 
-'''
-Make connection
-'''
-# r = requests.get(query_str, headers=secret_header)
-# print(r.status_code)
-# print(r.text)
+
 
