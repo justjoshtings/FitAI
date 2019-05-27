@@ -11,7 +11,6 @@ import json
 import credentials as cred
 import base64
 
-
 class FitbitAuthorization:
 	def __init__(self, clientID, clientSecret, callback_URL):
 		self.clientID = clientID 
