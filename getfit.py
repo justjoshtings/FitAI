@@ -16,15 +16,13 @@ My_App = FitbitAuthorization(cred.clientID, cred.clientSecret, cred.callback_URL
 # My_App.establishConnection()
 # My_App.getTokens()
 # My_App.saveTokens()
-# My_App.seeTokens()
 
-
-# My_App.refreshTokens()
-
-access_token = My_App.retrieveAccessToken()
-
-My_User = UserData(access_token)
-print(My_User.getBadges())
+My_App.testConnection() #Test connection and refresh token
+access_token = My_App.retrieveAccessToken() #Retrieve access token
+My_Account = FitbitAPI(access_token) #Create my account object
+# data_out = My_Account.getBadges()
+data_out = My_Account.getProfile()
+print(data_out)
 
 
 
