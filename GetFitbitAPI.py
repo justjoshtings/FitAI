@@ -196,31 +196,37 @@ class FitbitAPI:
 		self.access_token = access_token
 		self.secret_header = {'Authorization': 'Bearer {}'.format(self.access_token)}
 
+		'''
+		1. Need to map the rest of the API end points to this dict.
+		2. For the {resource-path} KeyErrors here and others where inputs are needed, need to figure out what inputs it needs and how to get the inputs in
+			-- smaller dicts for resource path options?
+		'''
+		
 		self.API_endpoints_dict = {
-				'Activity': {
-						'Lifetime Stats':'/1/user/-/activities.json',
-						'Activity By Date': '/1/user/-/activities/date/{}.json'.format('Date: yyyy-MM-dd'),
-						'Activity Log List':'/1/user/-/activities/list.json', #Has more parameters
-						'Broswe Activity Types':'/1/activities.json',
-						'Get Activity Type':'/1/activities/{}.json'.format('activity-id'),
-						'Get Frequent Activities':'/1/user/-/activities/frequent.json',
-						'Get Recent Activities':'/1/user/-/activities/recent.json',
-						'Get Favorite Activities':'/1/user/-/activities/favorite.json',
-						'Get Activity Goals':'/1/user/-/activities/goals/{}.json'.format('Period: Daily or weekly')
-				},
-				'Activity Intraday Time Series': {
-						'Get Activity Intraday Time Series':'/1/user/-/activities/{resource-path}/date/{base-date}/{end-date}/{detail-level}.json'.format(),
-						'Get Activity Intraday Time Series - Time Specified':'/1/user/-/activities/{resource-path}/date/{date}/{end-date}/{detail-level}/time/{start-time}/{end-time}.json'.format(),
-						'Get Intraday Time Series':'/1/user/-/activities/{resource-path}/date/{date}/1d/{detail-level}.json'.format(),
-						'Get Intraday Time Series - Time Specified':'/1/user/-/activities/{resource-path}/date/{date}/1d/{detail-level}/time/{start-time}/{end-time}.json'.format(),
-				},
+				# 'Activity': {
+				# 		'Lifetime Stats':'/1/user/-/activities.json',
+				# 		'Activity By Date': '/1/user/-/activities/date/{}.json'.format('Date: yyyy-MM-dd'),
+				# 		'Activity Log List':'/1/user/-/activities/list.json', #Has more parameters
+				# 		'Broswe Activity Types':'/1/activities.json',
+				# 		'Get Activity Type':'/1/activities/{}.json'.format('activity-id'),
+				# 		'Get Frequent Activities':'/1/user/-/activities/frequent.json',
+				# 		'Get Recent Activities':'/1/user/-/activities/recent.json',
+				# 		'Get Favorite Activities':'/1/user/-/activities/favorite.json',
+				# 		'Get Activity Goals':'/1/user/-/activities/goals/{}.json'.format('Period: Daily or weekly')
+				# },
+				# 'Activity Intraday Time Series': {
+				# 		'Get Activity Intraday Time Series':'/1/user/-/activities/{resource-path}/date/{base-date}/{end-date}/{detail-level}.json'.format(),
+				# 		'Get Activity Intraday Time Series - Time Specified':'/1/user/-/activities/{resource-path}/date/{date}/{end-date}/{detail-level}/time/{start-time}/{end-time}.json'.format(),
+				# 		'Get Intraday Time Series':'/1/user/-/activities/{resource-path}/date/{date}/1d/{detail-level}.json'.format(),
+				# 		'Get Intraday Time Series - Time Specified':'/1/user/-/activities/{resource-path}/date/{date}/1d/{detail-level}/time/{start-time}/{end-time}.json'.format(),
+				# },
 
-				'Activity Time Series': {
-						'Get Activity Resource by Date Range':'/1/user/-/activities/{resource-path}/date/{base-date}/{end-date}.json'.format(),
-						'Get Activity Tracker Resource by Date Range Time Series':'/1/user/-/activities/tracker/{resource-path}/date/{base-date}/{end-date}.json'.format(),
-						'Get Activity Time Series':'/1/user/-/activities/{resource-path}/date/{date}/{period}.json'.format(),
-						'Get Activity Time Series - Date Specified':'/1/user/-/activities/tracker/{resource-path}/date/{date}/{period}.json'.format()
-				},
+				# 'Activity Time Series': {
+				# 		'Get Activity Resource by Date Range':'/1/user/-/activities/{resource-path}/date/{base-date}/{end-date}.json'.format(),
+				# 		'Get Activity Tracker Resource by Date Range Time Series':'/1/user/-/activities/tracker/{resource-path}/date/{base-date}/{end-date}.json'.format(),
+				# 		'Get Activity Time Series':'/1/user/-/activities/{resource-path}/date/{date}/{period}.json'.format(),
+				# 		'Get Activity Time Series - Date Specified':'/1/user/-/activities/tracker/{resource-path}/date/{date}/{period}.json'.format()
+				# },
 
 				'User': {
 						'Badges': '/1/user/-/badges.json',
@@ -252,6 +258,10 @@ class FitbitAPI:
 
 		return self.r.text
 
+	# Can we make these below subclasses of FitbitAPI? They seem to have the same structure.
+	# So a CallGetter subclass then init method has the same structures for the rest of the API call types
+	# Then one method that is flexible enough to call all the different call types. Possible?
+	
 	def getBadges(self):
 		'''
 		Make API GET call and Get Badges 

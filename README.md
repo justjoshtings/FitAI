@@ -24,7 +24,7 @@ This repository will also include a custom built and fairly comprehensive method
 ## 2. Fitbit API
 1. Register an app with [Fitbit](https://dev.fitbit.com/apps/new).
 
-2. Will need **ClientID**, **ClientSecret**, and the entered **Callback URI**.
+2. Will need **ClientID**, **ClientSecret**, and the entered **Callback URI**. Enter credentials in the credentials_template.py format and save as credentials.py.
 
 3. Fitbit's API uses OAuth 2.0 for user-client app authentication. General steps for OAuth 2.0:
 ```
