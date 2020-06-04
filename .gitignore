@@ -1,7 +1,8 @@
-*.json
 credentials.py
+FitbitLogosAndGuidelines.zip
+
+*.json
 __pycache__
 .DS_store
-FitbitLogosAndGuidelines.zip
 *.pyc
 ProgressLog
