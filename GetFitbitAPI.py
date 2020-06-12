@@ -11,6 +11,9 @@ from requests_oauthlib import OAuth2Session
 import json
 import credentials as cred
 import base64
+import pandas as pd
+import simplejson as json
+from HelperFunctions import HelperFunctions
 
 class FitbitAuthorization:
 	'''
@@ -55,7 +58,6 @@ class FitbitAuthorization:
 	            "social",
 	            "weight",]
 	    
-
 	def establishConnection(self):
 		'''
 		Establish OAuth 2.0 connection with Fitbit's API
@@ -99,7 +101,9 @@ class FitbitAuthorization:
 			print ("OOps: Something Else",err)
 
 	def saveTokens(self):
-		#Save tokens to JSON file
+		'''
+		Save tokens to JSON file
+		'''
 		with open(self.filename, 'w') as outfile:
 			json.dump(self.response.text, outfile, ensure_ascii=False)
 
@@ -191,10 +195,15 @@ class FitbitAuthorization:
 
 
 class FitbitAPI:
+	'''
+	Object to setup the foundation and metadata needed to return based on an input category and endpoint.
+	Parent class to Endpoints class.
+	'''
 	def __init__(self, access_token):
-		self.baseAPI = 'https://api.fitbit.com'
 		self.access_token = access_token
 		self.secret_header = {'Authorization': 'Bearer {}'.format(self.access_token)}
+
+		self.baseAPI = 'https://api.fitbit.com'
 
 		'''
 		1. Need to map the rest of the API end points to this dict.
@@ -203,43 +212,21 @@ class FitbitAPI:
 		'''
 		
 		self.API_endpoints_dict = {
-				# 'Activity': {
-				# 		'Lifetime Stats':'/1/user/-/activities.json',
-				# 		'Activity By Date': '/1/user/-/activities/date/{}.json'.format('Date: yyyy-MM-dd'),
-				# 		'Activity Log List':'/1/user/-/activities/list.json', #Has more parameters
-				# 		'Broswe Activity Types':'/1/activities.json',
-				# 		'Get Activity Type':'/1/activities/{}.json'.format('activity-id'),
-				# 		'Get Frequent Activities':'/1/user/-/activities/frequent.json',
-				# 		'Get Recent Activities':'/1/user/-/activities/recent.json',
-				# 		'Get Favorite Activities':'/1/user/-/activities/favorite.json',
-				# 		'Get Activity Goals':'/1/user/-/activities/goals/{}.json'.format('Period: Daily or weekly')
-				# },
-				# 'Activity Intraday Time Series': {
-				# 		'Get Activity Intraday Time Series':'/1/user/-/activities/{resource-path}/date/{base-date}/{end-date}/{detail-level}.json'.format(),
-				# 		'Get Activity Intraday Time Series - Time Specified':'/1/user/-/activities/{resource-path}/date/{date}/{end-date}/{detail-level}/time/{start-time}/{end-time}.json'.format(),
-				# 		'Get Intraday Time Series':'/1/user/-/activities/{resource-path}/date/{date}/1d/{detail-level}.json'.format(),
-				# 		'Get Intraday Time Series - Time Specified':'/1/user/-/activities/{resource-path}/date/{date}/1d/{detail-level}/time/{start-time}/{end-time}.json'.format(),
-				# },
-
-				# 'Activity Time Series': {
-				# 		'Get Activity Resource by Date Range':'/1/user/-/activities/{resource-path}/date/{base-date}/{end-date}.json'.format(),
-				# 		'Get Activity Tracker Resource by Date Range Time Series':'/1/user/-/activities/tracker/{resource-path}/date/{base-date}/{end-date}.json'.format(),
-				# 		'Get Activity Time Series':'/1/user/-/activities/{resource-path}/date/{date}/{period}.json'.format(),
-				# 		'Get Activity Time Series - Date Specified':'/1/user/-/activities/tracker/{resource-path}/date/{date}/{period}.json'.format()
-				# },
 
 				'User': {
 						'Badges': '/1/user/-/badges.json',
 						'Profile': '/1/user/-/profile.json',
 						},
+				'Sleep':{
+						'Sleep Logs by Date': '/1.2/user/{}/sleep/date/{}/{}.json' #user-id = '-', startdate, enddate
+						}
 		}
 
 	def makeAPICall(self, endpoint):
 		'''
 		Make API call
 		'''
-		self.endpoint = endpoint
-		self.API_endpoint = self.baseAPI+self.endpoint
+		self.API_endpoint = endpoint
 
 		try:
 			self.r = requests.get(self.API_endpoint, headers=self.secret_header, timeout=10)
@@ -256,27 +243,44 @@ class FitbitAPI:
 		# print(self.r.status_code)
 		# print(self.r.text)
 
-		return self.r.text
+		try:
+			return self.r.text
+		except AttributeError as atterr:
+			print('Connection did not go through, try again!')
 
-	# Can we make these below subclasses of FitbitAPI? They seem to have the same structure.
-	# So a CallGetter subclass then init method has the same structures for the rest of the API call types
-	# Then one method that is flexible enough to call all the different call types. Possible?
+	def getGenericEndpoint(self, category, subcategory):
+		'''
+		Make API GET call based on parameters created on object EndPoints instantiation and returns the JSON output.
+		This is a generic endpoint where only the category and subcategory are needed:
+			- User, Badges
+			- User, Profile
+		'''
+		self.endpoint = self.baseAPI+self.API_endpoints_dict[category][subcategory]
+		self.data_out = self.makeAPICall(self.endpoint)
+		return self.data_out
+
+	def getSleepEndpoint(self, category, subcategory, startdate, enddate):
+		'''
+		Make API GET call based on parameters created on object EndPoints instantiation and returns the JSON output.
+
+		Max date range is 100 days
+		'''
+		self.endpoint = self.baseAPI+self.API_endpoints_dict[category][subcategory].format('-', startdate, enddate)
+		self.json_data_out = json.loads(self.makeAPICall(self.endpoint))
+
+		# Flatten the JSON to a PD DF
+		self.df = pd.io.json.json_normalize(self.json_data_out ['sleep'])
+
+		# Save to Excel
+		hfn = HelperFunctions()
+		hfn.df_to_excel(self.df, 'FitBit_API_Data', 'SleepLog')
+
+		return self.df
 	
-	def getBadges(self):
-		'''
-		Make API GET call and Get Badges 
-		'''
-		self.endpoint = self.API_endpoints_dict['User']['Badges']
-		self.data_out = self.makeAPICall(self.endpoint)
-		return self.data_out
 
-	def getProfile(self):
-		'''
-		Make API GET call and Get Profile data 
-		'''
-		self.endpoint = self.API_endpoints_dict['User']['Profile']
-		self.data_out = self.makeAPICall(self.endpoint)
-		return self.data_out
+
+
+
 
 
 
