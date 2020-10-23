@@ -58,6 +58,8 @@ class FitbitAuthorization:
 	            "social",
 	            "weight",]
 	    
+		self.hfn = HelperFunctions()
+
 	def establishConnection(self):
 		'''
 		Establish OAuth 2.0 connection with Fitbit's API
@@ -222,6 +224,10 @@ class FitbitAPI:
 						}
 		}
 
+		self.hfn = HelperFunctions()
+
+		self.sleep_days_threshold = 100
+
 	def makeAPICall(self, endpoint):
 		'''
 		Make API call
@@ -259,23 +265,33 @@ class FitbitAPI:
 		self.data_out = self.makeAPICall(self.endpoint)
 		return self.data_out
 
+	
 	def getSleepEndpoint(self, category, subcategory, startdate, enddate):
 		'''
 		Make API GET call based on parameters created on object EndPoints instantiation and returns the JSON output.
 
-		Max date range is 100 days
+		Max date range possible to download is 100 days
 		'''
-		self.endpoint = self.baseAPI+self.API_endpoints_dict[category][subcategory].format('-', startdate, enddate)
-		self.json_data_out = json.loads(self.makeAPICall(self.endpoint))
+		start_dates, end_dates = self.hfn.dates_between(startdate, enddate, self.sleep_days_threshold)
 
-		# Flatten the JSON to a PD DF
-		self.df = pd.io.json.json_normalize(self.json_data_out ['sleep'])
+		self.df_out = pd.DataFrame()
+		
+		for i in range(0,len(start_dates)):
+			self.endpoint = self.baseAPI+self.API_endpoints_dict[category][subcategory].format('-', start_dates[i], end_dates[i])
+			self.json_data_out = json.loads(self.makeAPICall(self.endpoint))
+
+			# Flatten the JSON to a PD DF
+			self.df = pd.io.json.json_normalize(self.json_data_out ['sleep'])
+
+			self.df_out = self.df_out.append(self.df)
 
 		# Save to Excel
-		hfn = HelperFunctions()
-		hfn.df_to_excel(self.df, 'FitBit_API_Data', 'SleepLog')
+		self.hfn.df_to_excel(self.df_out, 'FitBit_API_Data', 'SleepLog')
+		# Store in DB: sleep table
+		print(self.df_out.head(5))
+		# self.hfn.df_to_db(self.df_out)
 
-		return self.df
+		return self.df_out
 	
 
 

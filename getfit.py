@@ -9,7 +9,7 @@ from datetime import datetime as  dt
 import json
 from GetFitbitAPI import *
 import credentials as cred
-from AnalyticsWorkBench import *
+# from AnalyticsWorkBench import *
 
 #1. Instantiate my user authorization to get access and refresh tokens
 My_App = FitbitAuthorization(cred.clientID, cred.clientSecret, cred.callback_URL)
@@ -25,7 +25,7 @@ access_token = My_App.retrieveAccessToken() #Retrieve access token
 
 #4. Create My_Account connection object and get desired endpoints
 My_Account = FitbitAPI(access_token) #Create my account object
-sleep_logs = My_Account.getSleepEndpoint('Sleep', 'Sleep Logs by Date', '2019-05-01', '2019-06-30')
+sleep_logs = My_Account.getSleepEndpoint('Sleep', 'Sleep Logs by Date', '2019-05-01', '2020-10-21')
 
 # print(sleep_logs)
 

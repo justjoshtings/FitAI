@@ -1,10 +1,12 @@
 credentials.py
 FitbitLogosAndGuidelines.zip
+
 DataWarehouse/
+ProgressLog/
 
 *.json
 __pycache__
 .DS_store
 *.pyc
-ProgressLog
 *.db
+*.xlsx
